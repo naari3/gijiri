@@ -2,14 +2,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { EndBehaviorType, VoiceReceiver } from '@discordjs/voice';
 import { User } from 'discord.js';
-// import { createWriteStream } from 'fs';
 import { opus } from 'prism-media';
 import { pipeline } from 'stream';
 import { SpeechClient } from '@google-cloud/speech';
-
-function getDisplayName(userId: string, user?: User) {
-  return user ? `${user.username}_${user.discriminator}` : userId;
-}
 
 export function createListeningStream(receiver: VoiceReceiver, userId: string, user?: User): void {
   const opusStream = receiver.subscribe(userId, {
@@ -29,12 +24,6 @@ export function createListeningStream(receiver: VoiceReceiver, userId: string, u
     },
   });
 
-  const filename = `./recordings/${Date.now()}-${getDisplayName(userId, user)}.ogg`;
-
-  // const out = createWriteStream(filename);
-
-  // console.log(`👂 Started recording ${filename}`);
-
   const client = new SpeechClient();
   const recognizeStream = client
     .streamingRecognize({
@@ -44,24 +33,22 @@ export function createListeningStream(receiver: VoiceReceiver, userId: string, u
         audioChannelCount: 2,
         languageCode: 'ja-JP',
         model: 'phone_call',
+        useEnhanced: true,
       },
       interimResults: false,
     })
     .on('error', console.error)
-    .on('data', (data) =>
-      process.stdout.write(
-        data.results[0] && data.results[0].alternatives[0]
-          ? `${user?.username}: ${data.results[0].alternatives[0].transcript}\n`
-          : '\n\nReached transcription time limit, press Ctrl+C\n'
-      )
-    );
+    .on('data', (data) => {
+      if (data.results[0] && data.results[0].alternatives[0]) {
+        if ((data.results[0].alternatives[0].transcript as string).trim() !== '') {
+          console.log(`${user?.username}: ${data.results[0].alternatives[0].transcript}\n`);
+        }
+      }
+    });
 
-  // pipeline(opusStream, oggStream, recognizeStream, (err) => {
   pipeline(opusStream, oggStream, recognizeStream, (err) => {
-    // if (err) {
-    //   console.warn(`❌ Error recording file ${filename} - ${err.message}`);
-    // } else {
-    //   console.log(`✅ Recorded ${filename}`);
-    // }
+    if (err) {
+      console.warn(`❌ Error recording - ${err.message}`);
+    }
   });
 }
