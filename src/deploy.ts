@@ -19,6 +19,18 @@ export const deploy = async (guild: Guild): Promise<void> => {
       ],
     },
     {
+      name: 'remove',
+      description: 'Disables recording for a user',
+      options: [
+        {
+          name: 'speaker',
+          type: 'USER' as const,
+          description: 'The user to record',
+          required: true,
+        },
+      ],
+    },
+    {
       name: 'leave',
       description: 'Leave the voice channel',
     },

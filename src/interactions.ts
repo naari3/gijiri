@@ -33,7 +33,7 @@ async function join(
 
     receiver.speaking.on('start', (userId) => {
       if (recordable.has(userId)) {
-        createListeningStream(receiver, userId, client.users.cache.get(userId));
+        createListeningStream(receiver, userId, client, client.users.cache.get(userId));
       }
     });
   } catch (error) {
@@ -56,10 +56,30 @@ async function record(
 
     const { receiver } = connection;
     if (connection.receiver.speaking.users.has(userId)) {
-      createListeningStream(receiver, userId, client.users.cache.get(userId));
+      createListeningStream(receiver, userId, client, client.users.cache.get(userId));
     }
 
     await interaction.reply({ ephemeral: true, content: 'Listening!' });
+  } else {
+    await interaction.reply({ ephemeral: true, content: 'Join a voice channel and then try that again!' });
+  }
+}
+
+async function remove(
+  interaction: CommandInteraction,
+  recordable: Set<Snowflake>,
+  client: Client,
+  connection?: VoiceConnection
+) {
+  if (connection) {
+    const userId = interaction.options.get('speaker')?.value as Snowflake;
+    if (recordable.has(userId)) {
+      recordable.delete(userId);
+    } else {
+      return;
+    }
+
+    await interaction.reply({ ephemeral: true, content: 'Removed!' });
   } else {
     await interaction.reply({ ephemeral: true, content: 'Join a voice channel and then try that again!' });
   }
@@ -91,4 +111,5 @@ export const interactionHandlers = new Map<
 >();
 interactionHandlers.set('join', join);
 interactionHandlers.set('record', record);
+interactionHandlers.set('remove', remove);
 interactionHandlers.set('leave', leave);

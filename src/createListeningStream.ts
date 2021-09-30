@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { EndBehaviorType, VoiceReceiver } from '@discordjs/voice';
-import { User } from 'discord.js';
+import { Client, TextChannel, User } from 'discord.js';
 import { opus } from 'prism-media';
 import { pipeline } from 'stream';
 import { SpeechClient } from '@google-cloud/speech';
 
-export function createListeningStream(receiver: VoiceReceiver, userId: string, user?: User): void {
+export function createListeningStream(receiver: VoiceReceiver, userId: string, client: Client, user?: User): void {
   const opusStream = receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterInactivity,
@@ -24,8 +24,15 @@ export function createListeningStream(receiver: VoiceReceiver, userId: string, u
     },
   });
 
-  const client = new SpeechClient();
-  const recognizeStream = client
+  const sendMessage = async (message: string) => {
+    const channel = client.channels.cache.get('893170036901048330');
+    if (channel?.isText) {
+      await (channel as TextChannel).send(`${user?.username}: ${message}`);
+    }
+  };
+
+  const sClient = new SpeechClient();
+  const recognizeStream = sClient
     .streamingRecognize({
       config: {
         encoding: 'OGG_OPUS',
@@ -41,7 +48,9 @@ export function createListeningStream(receiver: VoiceReceiver, userId: string, u
     .on('data', (data) => {
       if (data.results[0] && data.results[0].alternatives[0]) {
         if ((data.results[0].alternatives[0].transcript as string).trim() !== '') {
-          console.log(`${user?.username}: ${data.results[0].alternatives[0].transcript}\n`);
+          sendMessage(data.results[0].alternatives[0].transcript).catch((r) => {
+            throw r;
+          });
         }
       }
     });
