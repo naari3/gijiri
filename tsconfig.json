@@ -13,7 +13,7 @@
     // 使われているthisの型が暗黙的にanyになる場合にエラー
     "noImplicitThis": true,
     // 宣言されたが使用されていない変数が存在する場合にエラー
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     // 条件分岐の条件によって明示的なreturnがされないルートがあるとエラー
     "noImplicitReturns": true,
     "esModuleInterop": true,

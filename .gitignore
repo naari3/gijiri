@@ -1,3 +1,5 @@
 /node_modules/
 /recordings/*
 !/recordings/.gitkeep
+/keys/*
+!/keys/.gitkeep
