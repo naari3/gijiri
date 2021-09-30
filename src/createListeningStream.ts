@@ -5,8 +5,15 @@ import { Client, TextChannel, User } from 'discord.js';
 import { opus } from 'prism-media';
 import { pipeline } from 'stream';
 import { SpeechClient } from '@google-cloud/speech';
+import { ChannelDefinitions } from './db/models/ChannelDefinition';
 
-export function createListeningStream(receiver: VoiceReceiver, userId: string, client: Client, user?: User): void {
+export function createListeningStream(
+  receiver: VoiceReceiver,
+  userId: string,
+  client: Client,
+  user?: User,
+  guildId?: string
+): void {
   const opusStream = receiver.subscribe(userId, {
     end: {
       behavior: EndBehaviorType.AfterInactivity,
@@ -25,8 +32,13 @@ export function createListeningStream(receiver: VoiceReceiver, userId: string, c
   });
 
   const sendMessage = async (message: string) => {
-    const channel = client.channels.cache.get('893170036901048330');
-    if (channel?.isText) {
+    const channelDefinition = await ChannelDefinitions.findOne({ where: { guild_id: guildId } });
+    if (!channelDefinition) {
+      return;
+    }
+    const channelId = channelDefinition?.get('channel_id') as string;
+    const channel = await client.channels.fetch(channelId);
+    if (channel?.isText()) {
       await (channel as TextChannel).send(`${user?.username}: ${message}`);
     }
   };

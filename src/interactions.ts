@@ -1,6 +1,7 @@
 import { entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
 import { Client, CommandInteraction, GuildMember, Snowflake } from 'discord.js';
 import { createListeningStream } from './createListeningStream';
+import { ChannelDefinitions } from './db/models/ChannelDefinition';
 
 async function join(
   interaction: CommandInteraction,
@@ -9,6 +10,13 @@ async function join(
   connection?: VoiceConnection
 ) {
   await interaction.deferReply();
+  const guildId = interaction.guildId ? interaction.guildId : undefined;
+  const channelDefinition = await ChannelDefinitions.findOne({ where: { guild_id: guildId } });
+  if (!channelDefinition) {
+    await interaction.followUp('You should set text channel at first!');
+
+    return;
+  }
   if (!connection) {
     if (interaction.member instanceof GuildMember && interaction.member.voice.channel) {
       const { channel } = interaction.member.voice;
@@ -33,7 +41,7 @@ async function join(
 
     receiver.speaking.on('start', (userId) => {
       if (recordable.has(userId)) {
-        createListeningStream(receiver, userId, client, client.users.cache.get(userId));
+        createListeningStream(receiver, userId, client, client.users.cache.get(userId), guildId);
       }
     });
   } catch (error) {
@@ -56,7 +64,13 @@ async function record(
 
     const { receiver } = connection;
     if (connection.receiver.speaking.users.has(userId)) {
-      createListeningStream(receiver, userId, client, client.users.cache.get(userId));
+      createListeningStream(
+        receiver,
+        userId,
+        client,
+        client.users.cache.get(userId),
+        interaction.guildId ? interaction.guildId : undefined
+      );
     }
 
     await interaction.reply({ ephemeral: true, content: 'Listening!' });
@@ -68,7 +82,7 @@ async function record(
 async function remove(
   interaction: CommandInteraction,
   recordable: Set<Snowflake>,
-  client: Client,
+  _client: Client,
   connection?: VoiceConnection
 ) {
   if (connection) {
@@ -88,7 +102,7 @@ async function remove(
 async function leave(
   interaction: CommandInteraction,
   recordable: Set<Snowflake>,
-  client: Client,
+  _client: Client,
   connection?: VoiceConnection
 ) {
   if (connection) {
@@ -100,16 +114,35 @@ async function leave(
   }
 }
 
+async function set(
+  interaction: CommandInteraction,
+  _recordable: Set<Snowflake>,
+  _client: Client,
+  _connection?: VoiceConnection
+): Promise<void> {
+  await interaction.deferReply();
+  const guildId = interaction.guildId ? interaction.guildId : undefined;
+  if (!guildId) {
+    await interaction.followUp('You should run in any Server!');
+
+    return;
+  }
+  await ChannelDefinitions.upsert({ guild_id: guildId, channel_id: interaction.channelId });
+  await interaction.followUp('Set this channel to send records!');
+}
+
 export const interactionHandlers = new Map<
   string,
   (
-    interaction: CommandInteraction,
-    recordable: Set<Snowflake>,
-    client: Client,
-    connection?: VoiceConnection
+    _interaction: CommandInteraction,
+    _recordable: Set<Snowflake>,
+    _client: Client,
+    _connection?: VoiceConnection
   ) => Promise<void>
 >();
+
 interactionHandlers.set('join', join);
 interactionHandlers.set('record', record);
 interactionHandlers.set('remove', remove);
 interactionHandlers.set('leave', leave);
+interactionHandlers.set('set', set);

@@ -34,5 +34,6 @@ module.exports = {
     'newline-before-return': 'error',
     'no-console': 'off',
     'no-var': 'error',
+    // 'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
   },
 };

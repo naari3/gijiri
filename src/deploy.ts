@@ -34,5 +34,9 @@ export const deploy = async (guild: Guild): Promise<void> => {
       name: 'leave',
       description: 'Leave the voice channel',
     },
+    {
+      name: 'set',
+      description: 'Set the text channel for sending records',
+    },
   ]);
 };
