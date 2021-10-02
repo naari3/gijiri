@@ -5,7 +5,7 @@ import { Client, TextChannel, User } from 'discord.js';
 import { opus } from 'prism-media';
 import { pipeline } from 'stream';
 import { SpeechClient } from '@google-cloud/speech';
-import { ChannelDefinitions } from './db/models/ChannelDefinition';
+import { ChannelDefinition } from './db/models/ChannelDefinition';
 
 export function createListeningStream(
   receiver: VoiceReceiver,
@@ -32,13 +32,14 @@ export function createListeningStream(
   });
 
   const sendMessage = async (message: string) => {
-    const channelDefinition = await ChannelDefinitions.findOne({ where: { guild_id: guildId } });
+    const channelDefinition = await ChannelDefinition.findOne({ where: { guildId } });
     if (!channelDefinition) {
       return;
     }
-    const channelId = channelDefinition?.get('channel_id') as string;
+    const { channelId } = channelDefinition;
     const channel = await client.channels.fetch(channelId);
     if (channel?.isText()) {
+      // await (channel as TextChannel).send(`<@${userId}>: ${message}`); // 通知バッヂが溜まっていってしまうのでダメ 表記的には一番良かったのだけれど
       await (channel as TextChannel).send(`${user?.username}#${user?.discriminator}: ${message}`);
     }
   };

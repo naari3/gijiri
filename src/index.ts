@@ -3,12 +3,12 @@ import Discord, { Interaction } from 'discord.js';
 import { getVoiceConnection } from '@discordjs/voice';
 import { deploy } from './deploy';
 import { interactionHandlers } from './interactions';
-import { ChannelDefinitions } from './db/models/ChannelDefinition';
+import { ChannelDefinition } from './db/models/ChannelDefinition';
 
 const client = new Discord.Client({ intents: ['GUILD_VOICE_STATES', 'GUILD_MESSAGES', 'GUILDS'] });
 
 client.on('ready', async () => {
-  await ChannelDefinitions.sync();
+  await ChannelDefinition.sync();
   console.log('Ready');
 });
 

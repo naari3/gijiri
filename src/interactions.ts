@@ -1,7 +1,7 @@
 import { entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice';
 import { Client, CommandInteraction, GuildMember, Snowflake } from 'discord.js';
 import { createListeningStream } from './createListeningStream';
-import { ChannelDefinitions } from './db/models/ChannelDefinition';
+import { ChannelDefinition } from './db/models/ChannelDefinition';
 
 async function join(
   interaction: CommandInteraction,
@@ -11,7 +11,7 @@ async function join(
 ) {
   await interaction.deferReply();
   const guildId = interaction.guildId ? interaction.guildId : undefined;
-  const channelDefinition = await ChannelDefinitions.findOne({ where: { guild_id: guildId } });
+  const channelDefinition = await ChannelDefinition.findOne({ where: { guildId } });
   if (!channelDefinition) {
     await interaction.followUp('You should set text channel at first!');
 
@@ -144,7 +144,7 @@ async function set(
 
     return;
   }
-  await ChannelDefinitions.upsert({ guild_id: guildId, channel_id: interaction.channelId });
+  await ChannelDefinition.upsert({ guildId, channelId: interaction.channelId });
   await interaction.followUp('Set this channel to send records!');
 }
 

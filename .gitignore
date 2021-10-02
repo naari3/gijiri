@@ -3,3 +3,4 @@
 !/recordings/.gitkeep
 /keys/*
 !/keys/.gitkeep
+database.sqlite
