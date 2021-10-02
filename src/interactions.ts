@@ -41,7 +41,18 @@ async function join(
 
     receiver.speaking.on('start', (userId) => {
       if (recordable.has(userId)) {
-        createListeningStream(receiver, userId, client, client.users.cache.get(userId), guildId);
+        if (!guildId) {
+          console.log('No guild id');
+
+          return;
+        }
+        const user = client.users.cache.get(userId);
+        if (!user) {
+          console.log('No User');
+
+          return;
+        }
+        createListeningStream(receiver, userId, client, user, guildId);
       }
     });
   } catch (error) {
@@ -64,13 +75,19 @@ async function record(
 
     const { receiver } = connection;
     if (connection.receiver.speaking.users.has(userId)) {
-      createListeningStream(
-        receiver,
-        userId,
-        client,
-        client.users.cache.get(userId),
-        interaction.guildId ? interaction.guildId : undefined
-      );
+      const { guildId } = interaction;
+      if (!guildId) {
+        console.log('No guild id');
+
+        return;
+      }
+      const user = client.users.cache.get(userId);
+      if (!user) {
+        console.log('No User');
+
+        return;
+      }
+      createListeningStream(receiver, userId, client, user, guildId);
     }
 
     await interaction.reply({ ephemeral: true, content: 'Listening!' });

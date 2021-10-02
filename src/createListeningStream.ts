@@ -11,8 +11,8 @@ export function createListeningStream(
   receiver: VoiceReceiver,
   userId: string,
   client: Client,
-  user?: User,
-  guildId?: string
+  user: User,
+  guildId: string
 ): void {
   const opusStream = receiver.subscribe(userId, {
     end: {
@@ -39,7 +39,7 @@ export function createListeningStream(
     const channelId = channelDefinition?.get('channel_id') as string;
     const channel = await client.channels.fetch(channelId);
     if (channel?.isText()) {
-      await (channel as TextChannel).send(`${user?.username}: ${message}`);
+      await (channel as TextChannel).send(`${user?.username}#${user?.discriminator}: ${message}`);
     }
   };
 
